@@ -80,13 +80,13 @@ with st.sidebar:
             tol = st.number_input("허용오차(±공차)", value=2.0, min_value=0.0, step=0.5, key=f"v_tol_{ver}")
             num_sg = st.slider("부분군 수", 5, 100, 30, key=f"v_numsg_{ver}")
             sg_size = st.slider("부분군 크기", 1, 25, 4, key=f"v_sgsize_{ver}")
-            sg_std = st.number_input("부분군 표준편차", value=0.6, min_value=0.01, step=0.1, key=f"v_std_{ver}")
-            mean_shift = st.number_input("부분군 평균 이동폭", value=0.0, min_value=0.0, step=0.1, key=f"v_shift_{ver}")
+            sg_std = st.number_input("부분군 표준편차", value=2.0, min_value=0.01, step=0.1, key=f"v_std_{ver}")
+            mean_shift = st.number_input("부분군 평균 이동폭", value=2.0, min_value=0.0, step=0.1, key=f"v_shift_{ver}")
             add_out = st.checkbox(
                 "이상치 주입 (이상치 제거·재계산 시연용)", value=False, key=f"v_out_{ver}",
-                help="체크하면 데이터에 이상치를 일부 주입합니다. "
+                help="체크하면 데이터에 이상치(비정상적으로 큰 값)를 일부 주입합니다. "
                      "관리도(SPC) 탭의 '이상치 제거 후 관리한계 재계산' 기능을 "
-                     "직접 시연해보기 위한 옵션입니다.")
+                     "직접 시연해보기 위한 옵션이며, 평소 분석에는 끄고 사용하세요.")
             df = generate_value_data(var_name=VAL, sg_name=SG, target=target,
                                      num_sg=num_sg, sg_size=sg_size, sg_std=sg_std,
                                      mean_shift=mean_shift, seed=st.session_state["sample_seed"])
@@ -355,7 +355,7 @@ with tab_spc:
                               index=["Xbar-R", "Xbar-S", "I-MR"].index(rec), horizontal=True)
         window = 3
         if chart_type == "I-MR":
-            window = st.slider("이동범위 윈도우(w)", 2, 5, 3)
+            window = st.slider("이동범위 윈도우(w)", 2, 10, 3)
 
         try:
             if chart_type == "Xbar-R":
