@@ -47,6 +47,9 @@ st.title("공정능력분석 & 통계적공정관리(SPC)")
 # ===========================================================================
 if "sample_seed" not in st.session_state:
     st.session_state["sample_seed"] = 42
+if "param_ver" not in st.session_state:
+    st.session_state["param_ver"] = 0
+ver = st.session_state["param_ver"]
 
 with st.sidebar:
     st.header("⚙️ 데이터 설정")
@@ -69,18 +72,16 @@ with st.sidebar:
             st.subheader("샘플 생성 파라미터")
             if st.button("🎲 새 샘플 생성 (파라미터 초기화)", key="v_reroll", width="stretch"):
                 st.session_state["sample_seed"] = random.randint(1, 10_000_000)
-                for k in ["v_var", "v_target", "v_tol", "v_numsg", "v_sgsize",
-                          "v_std", "v_shift", "v_out"]:
-                    st.session_state.pop(k, None)
+                st.session_state["param_ver"] += 1
                 st.rerun()
-            var_name = st.text_input("측정 특성명", "두께", key="v_var")
-            target = st.number_input("목표값(중심)", value=40.0, step=1.0, key="v_target")
-            tol = st.number_input("허용오차(±공차)", value=2.0, min_value=0.0, step=0.5, key="v_tol")
-            num_sg = st.slider("부분군 수", 5, 100, 30, key="v_numsg")
-            sg_size = st.slider("부분군 크기", 1, 25, 4, key="v_sgsize")
-            sg_std = st.number_input("부분군 표준편차", value=0.6, min_value=0.01, step=0.1, key="v_std")
-            mean_shift = st.number_input("부분군 평균 이동폭", value=0.0, min_value=0.0, step=0.1, key="v_shift")
-            add_out = st.checkbox("이상치 주입(이상점 제거 데모용)", value=False, key="v_out")
+            var_name = st.text_input("측정 특성명", "두께", key=f"v_var_{ver}")
+            target = st.number_input("목표값(중심)", value=40.0, step=1.0, key=f"v_target_{ver}")
+            tol = st.number_input("허용오차(±공차)", value=2.0, min_value=0.0, step=0.5, key=f"v_tol_{ver}")
+            num_sg = st.slider("부분군 수", 5, 100, 30, key=f"v_numsg_{ver}")
+            sg_size = st.slider("부분군 크기", 1, 25, 4, key=f"v_sgsize_{ver}")
+            sg_std = st.number_input("부분군 표준편차", value=0.6, min_value=0.01, step=0.1, key=f"v_std_{ver}")
+            mean_shift = st.number_input("부분군 평균 이동폭", value=0.0, min_value=0.0, step=0.1, key=f"v_shift_{ver}")
+            add_out = st.checkbox("이상치 주입(이상점 제거 데모용)", value=False, key=f"v_out_{ver}")
             df = generate_value_data(var_name=VAL, sg_name=SG, target=target,
                                      num_sg=num_sg, sg_size=sg_size, sg_std=sg_std,
                                      mean_shift=mean_shift, seed=st.session_state["sample_seed"])
@@ -120,16 +121,15 @@ with st.sidebar:
             st.subheader("샘플 생성 파라미터")
             if st.button("🎲 새 샘플 생성 (파라미터 초기화)", key="c_reroll", width="stretch"):
                 st.session_state["sample_seed"] = random.randint(1, 10_000_000)
-                for k in ["c_kind", "c_var", "c_numsg", "c_sgsize", "c_p", "c_sizevar"]:
-                    st.session_state.pop(k, None)
+                st.session_state["param_ver"] += 1
                 st.rerun()
-            defect_kind = st.radio("관리 대상", ["불량 (이항분포 → P/NP)", "결점 (포아송 → C/U)"], key="c_kind")
-            var_name = st.text_input("특성명", "불량수" if "불량" in defect_kind else "결점수", key="c_var")
-            num_sg = st.slider("부분군 수", 5, 100, 25, key="c_numsg")
-            sg_size = st.slider("부분군 표본크기", 50, 1000, 300, step=10, key="c_sgsize")
+            defect_kind = st.radio("관리 대상", ["불량 (이항분포 → P/NP)", "결점 (포아송 → C/U)"], key=f"c_kind_{ver}")
+            var_name = st.text_input("특성명", "불량수" if "불량" in defect_kind else "결점수", key=f"c_var_{ver}")
+            num_sg = st.slider("부분군 수", 5, 100, 25, key=f"c_numsg_{ver}")
+            sg_size = st.slider("부분군 표본크기", 50, 1000, 300, step=10, key=f"c_sgsize_{ver}")
             p = st.number_input("발생 확률(p)", value=0.02, min_value=0.001, max_value=0.5,
-                                step=0.005, format="%.3f", key="c_p")
-            size_var = st.checkbox("표본 크기 변동 허용(가변)", value=False, key="c_sizevar")
+                                step=0.005, format="%.3f", key=f"c_p_{ver}")
+            size_var = st.checkbox("표본 크기 변동 허용(가변)", value=False, key=f"c_sizevar_{ver}")
             CNT = var_name
             df = generate_count_data(var_name=CNT, sg_name=SG, size_name=SIZE,
                                      num_sg=num_sg, sg_size=sg_size, p=p,
