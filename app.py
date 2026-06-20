@@ -84,9 +84,9 @@ with st.sidebar:
             mean_shift = st.number_input("부분군 평균 이동폭", value=0.0, min_value=0.0, step=0.1, key=f"v_shift_{ver}")
             add_out = st.checkbox(
                 "이상치 주입 (이상치 제거·재계산 시연용)", value=False, key=f"v_out_{ver}",
-                help="체크하면 데이터에 이상치(비정상적으로 큰 값)를 일부 주입합니다. "
+                help="체크하면 데이터에 이상치를 일부 주입합니다. "
                      "관리도(SPC) 탭의 '이상치 제거 후 관리한계 재계산' 기능을 "
-                     "직접 시연해보기 위한 옵션이며, 평소 분석에는 끄고 사용하세요.")
+                     "직접 시연해보기 위한 옵션입니다.")
             df = generate_value_data(var_name=VAL, sg_name=SG, target=target,
                                      num_sg=num_sg, sg_size=sg_size, sg_std=sg_std,
                                      mean_shift=mean_shift, seed=st.session_state["sample_seed"])
