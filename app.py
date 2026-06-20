@@ -6,6 +6,7 @@
 시각화 대시보드로 현재 공정 상태를 판단할 수 있습니다.
 """
 import io
+import random
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -44,6 +45,9 @@ st.title("공정능력분석 & 통계적공정관리(SPC)")
 # ===========================================================================
 # 사이드바 — 데이터 설정
 # ===========================================================================
+if "sample_seed" not in st.session_state:
+    st.session_state["sample_seed"] = 42
+
 with st.sidebar:
     st.header("⚙️ 데이터 설정")
 
@@ -63,6 +67,12 @@ with st.sidebar:
         SG, VAL = "부분군", "측정값"
         if source == "샘플 데이터 생성":
             st.subheader("샘플 생성 파라미터")
+            if st.button("🎲 새 샘플 생성 (파라미터 초기화)", key="v_reroll", width="stretch"):
+                st.session_state["sample_seed"] = random.randint(1, 10_000_000)
+                for k in ["v_var", "v_target", "v_tol", "v_numsg", "v_sgsize",
+                          "v_std", "v_shift", "v_out"]:
+                    st.session_state.pop(k, None)
+                st.rerun()
             var_name = st.text_input("측정 특성명", "두께", key="v_var")
             target = st.number_input("목표값(중심)", value=40.0, step=1.0, key="v_target")
             tol = st.number_input("허용오차(±공차)", value=2.0, min_value=0.0, step=0.5, key="v_tol")
@@ -73,9 +83,10 @@ with st.sidebar:
             add_out = st.checkbox("이상치 주입(이상점 제거 데모용)", value=False, key="v_out")
             df = generate_value_data(var_name=VAL, sg_name=SG, target=target,
                                      num_sg=num_sg, sg_size=sg_size, sg_std=sg_std,
-                                     mean_shift=mean_shift)
+                                     mean_shift=mean_shift, seed=st.session_state["sample_seed"])
             if add_out:
-                df = add_outliers_value(df, VAL, SG, n_out=max(1, num_sg // 10), magnitude=4.0)
+                df = add_outliers_value(df, VAL, SG, n_out=max(1, num_sg // 10),
+                                        magnitude=4.0, seed=st.session_state["sample_seed"] + 1)
             st.session_state["spec_target"] = target
             st.session_state["spec_tol"] = tol
 
@@ -107,6 +118,11 @@ with st.sidebar:
         SG, SIZE, CNT = "부분군", "표본크기", "개수"
         if source == "샘플 데이터 생성":
             st.subheader("샘플 생성 파라미터")
+            if st.button("🎲 새 샘플 생성 (파라미터 초기화)", key="c_reroll", width="stretch"):
+                st.session_state["sample_seed"] = random.randint(1, 10_000_000)
+                for k in ["c_kind", "c_var", "c_numsg", "c_sgsize", "c_p", "c_sizevar"]:
+                    st.session_state.pop(k, None)
+                st.rerun()
             defect_kind = st.radio("관리 대상", ["불량 (이항분포 → P/NP)", "결점 (포아송 → C/U)"], key="c_kind")
             var_name = st.text_input("특성명", "불량수" if "불량" in defect_kind else "결점수", key="c_var")
             num_sg = st.slider("부분군 수", 5, 100, 25, key="c_numsg")
@@ -117,7 +133,8 @@ with st.sidebar:
             CNT = var_name
             df = generate_count_data(var_name=CNT, sg_name=SG, size_name=SIZE,
                                      num_sg=num_sg, sg_size=sg_size, p=p,
-                                     sg_size_variation=(sg_size // 10 if size_var else 0))
+                                     sg_size_variation=(sg_size // 10 if size_var else 0),
+                                     seed=st.session_state["sample_seed"])
             st.session_state["defect_kind"] = "불량" if "불량" in defect_kind else "결점"
 
         elif source == "CSV 업로드":
