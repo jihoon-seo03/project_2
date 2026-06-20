@@ -45,9 +45,9 @@ def capability_figure(values, USL, LSL, x_bar, sigma_within, title="공정능력
     fig.add_vline(x=x_bar, line=dict(color=C_CL, width=2),
                   annotation_text="x̄", annotation_position="bottom")
 
-    fig.update_layout(title=title, height=430, bargap=0.05,
-                      margin=dict(l=20, r=20, t=50, b=20),
-                      legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
+    fig.update_layout(title=title, height=440, bargap=0.05,
+                      margin=dict(l=20, r=20, t=60, b=70),
+                      legend=dict(orientation="h", yanchor="top", y=-0.18, x=0),
                       xaxis_title="측정값", yaxis_title="밀도")
     return fig
 
@@ -94,9 +94,9 @@ def control_chart_figure(charts, names, var_name="값", ooc_map=None, title=None
     """
     ooc_map = ooc_map or {}
     n = len(charts)
-    fig = make_subplots(rows=n, cols=1, shared_xaxes=False,
+    fig = make_subplots(rows=n, cols=1, shared_xaxes=True,
                         subplot_titles=[f"{nm} 관리도" for nm in names],
-                        vertical_spacing=0.12)
+                        vertical_spacing=0.13)
 
     for i, (ch, nm) in enumerate(zip(charts, names)):
         row = i + 1
@@ -134,10 +134,12 @@ def control_chart_figure(charts, names, var_name="값", ooc_map=None, title=None
                            showarrow=False, xanchor="left", font=dict(color=C_LIM, size=10),
                            row=row, col=1)
         fig.update_yaxes(title_text=nm, row=row, col=1)
-        fig.update_xaxes(title_text="부분군", row=row, col=1)
+    # x축 제목은 맨 아래 차트에만 (공유 x축)
+    fig.update_xaxes(title_text="부분군", row=n, col=1)
 
-    fig.update_layout(height=260 * n + 60,
-                      title=title or f"{var_name} 관리도",
-                      margin=dict(l=40, r=90, t=70, b=40),
-                      legend=dict(orientation="h", yanchor="bottom", y=1.04, x=0))
+    fig.update_layout(height=300 * n + 60,
+                      title=dict(text=title or f"{var_name} 관리도", x=0.5, xanchor="center"),
+                      margin=dict(l=55, r=95, t=60, b=70),
+                      legend=dict(orientation="h", yanchor="top", y=-0.06,
+                                  x=0.5, xanchor="center"))
     return fig

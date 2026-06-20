@@ -39,8 +39,7 @@ def _render_ooc(chart, nelson, name):
 # ---------------------------------------------------------------------------
 # 헤더
 # ---------------------------------------------------------------------------
-st.title("📊 공정능력분석 & 통계적공정관리(SPC)")
-st.caption("스마트제조 프로젝트 2 · 데이터를 변경하면 분석과 관리도가 즉시 재계산됩니다.")
+st.title("공정능력분석 & 통계적공정관리(SPC)")
 
 # ===========================================================================
 # 사이드바 — 데이터 설정
@@ -303,14 +302,14 @@ if tab_cap is not None:
                     fig = viz.capability_figure(work_df[wVAL].to_numpy(float), wUSL, wLSL,
                                                 res["x_bar"], res["sigma_within"],
                                                 title="공정능력 (히스토그램 + 정규분포)")
-                    st.plotly_chart(fig, width="stretch")
+                    st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
                 with g2:
                     osm, osr, slope, intercept, r = cap.qq_data(work_df[wVAL].to_numpy(float))
                     st.plotly_chart(viz.qq_figure(osm, osr, slope, intercept),
-                                    width="stretch")
+                                    width="stretch", config={"displayModeBar": False})
                 st.plotly_chart(
                     viz.box_by_group_figure(work_df, SG, wVAL, wUSL, wLSL),
-                    width="stretch")
+                    width="stretch", config={"displayModeBar": False})
 
 # ---------------------------------------------------------------------------
 # 관리도(SPC) 탭
@@ -330,13 +329,11 @@ with tab_spc:
         else:
             rec = "Xbar-S"
         st.subheader("관리도 선택")
-        cc1, cc2 = st.columns([2, 1])
-        chart_type = cc1.radio("관리도 종류", ["Xbar-R", "Xbar-S", "I-MR"],
-                               index=["Xbar-R", "Xbar-S", "I-MR"].index(rec), horizontal=True)
-        cc2.info(f"부분군 크기(최빈) = {mode_n}\n\n👉 추천: **{rec}**")
+        chart_type = st.radio("관리도 종류", ["Xbar-R", "Xbar-S", "I-MR"],
+                              index=["Xbar-R", "Xbar-S", "I-MR"].index(rec), horizontal=True)
         window = 3
         if chart_type == "I-MR":
-            window = cc2.slider("이동범위 윈도우(w)", 2, 5, 3)
+            window = st.slider("이동범위 윈도우(w)", 2, 5, 3)
 
         try:
             if chart_type == "Xbar-R":
@@ -353,7 +350,7 @@ with tab_spc:
 
             fig = viz.control_chart_figure(charts, names, var_name=VAL,
                                            ooc_map=limit_ooc, title=f"{chart_type} 관리도 — {VAL}")
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
 
             _render_ooc(main, nelson, names[0])
 
@@ -381,7 +378,7 @@ with tab_spc:
                         st.plotly_chart(
                             viz.control_chart_figure(ch2, sub, var_name=VAL, ooc_map=oo2,
                                                      title="이상치 제거 후 재작성된 관리도"),
-                            width="stretch")
+                            width="stretch", config={"displayModeBar": False})
                         st.caption("이상치를 제거하면 관리한계 폭이 좁아져, 기존에 정상이던 점이 새로운 이상점이 될 수 있습니다. 모든 점이 관리상태가 될 때까지 반복합니다.")
                     else:
                         st.warning("제거 후 부분군이 부족하여 재계산할 수 없습니다.")
@@ -399,9 +396,7 @@ with tab_spc:
             rec = "C" if const_n else "U"
             options = ["C", "U"]
         st.subheader("관리도 선택")
-        cc1, cc2 = st.columns([2, 1])
-        chart_type = cc1.radio("관리도 종류", options, index=options.index(rec), horizontal=True)
-        cc2.info(f"관리대상: **{kind}** · 표본크기 {'일정' if const_n else '가변'}\n\n👉 추천: **{rec}**")
+        chart_type = st.radio("관리도 종류", options, index=options.index(rec), horizontal=True)
 
         try:
             if chart_type == "NP":
@@ -421,7 +416,7 @@ with tab_spc:
             limit_ooc = {0: spc.ooc_by_limits(ch)}
             fig = viz.control_chart_figure([ch], [nm], var_name=CNT,
                                            ooc_map=limit_ooc, title=f"{nm} 관리도 — {CNT}")
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
             _render_ooc(ch, nelson, nm)
         except Exception as e:
             st.error(f"관리도 계산 오류: {e}")
@@ -450,4 +445,4 @@ with tab_help:
 """)
 
 st.divider()
-st.caption("스마트제조 프로젝트 2 · Streamlit + scipy + Plotly · 불편화 상수 강의록 표 내장")
+st.caption("스마트제조 프로젝트2 - C221024 서지훈")
