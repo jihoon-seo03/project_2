@@ -137,9 +137,8 @@ def control_chart_figure(charts, names, var_name="값", ooc_map=None, title=None
     # x축 제목은 맨 아래 차트에만 (공유 x축)
     fig.update_xaxes(title_text="부분군", row=n, col=1)
 
-    fig.update_layout(height=300 * n + 60,
+    # 범례는 제거 (오른쪽 UCL/CL/LCL 값 주석이 색상 키 역할)
+    fig.update_layout(height=300 * n + 50, showlegend=False,
                       title=dict(text=title or f"{var_name} 관리도", x=0.5, xanchor="center"),
-                      margin=dict(l=55, r=95, t=60, b=70),
-                      legend=dict(orientation="h", yanchor="top", y=-0.06,
-                                  x=0.5, xanchor="center"))
+                      margin=dict(l=55, r=95, t=60, b=55))
     return fig
