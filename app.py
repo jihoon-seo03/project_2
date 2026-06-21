@@ -401,9 +401,6 @@ with tab_spc:
                             width="stretch", config={"displayModeBar": False})
                         if ph["in_control"]:
                             st.success("모든 점이 관리상태에 도달했습니다 (Rule 1 이탈 없음).")
-                        st.caption("Phase I 절차: 한계를 벗어난 부분군을 한 번에 하나씩 제거하고 "
-                                   "관리한계를 다시 계산하는 과정을, 모든 점이 관리상태가 될 때까지 "
-                                   "반복합니다. (제외는 Rule 1(한계 이탈)만 적용)")
                     else:
                         st.warning("제거 후 부분군이 부족하여 재계산할 수 없습니다.")
         except Exception as e:
