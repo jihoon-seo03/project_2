@@ -375,17 +375,16 @@ with tab_spc:
 
             _render_ooc(main, nelson, names[0])
 
-            # 이상치 제거 후 관리한계 재계산 (강의록 예제)
+            # Phase I: 한계 이탈(Rule 1) 부분군을 1개씩 제거 → 관리상태까지 반복 재계산
             limit_pts = sorted(set(limit_ooc.get(0, []) + limit_ooc.get(1, [])))
             if limit_pts and chart_type in ("Xbar-R", "Xbar-S"):
-                ooc_labels = [list(main.index)[i] for i in limit_pts]
-                with st.expander(f"🔧 관리한계 이탈 부분군 제거 후 재작성 (이탈 {len(ooc_labels)}개)"):
-                    st.write(f"이탈 부분군(Lot): {ooc_labels}")
-                    df2 = df[~df[SG].isin(ooc_labels)]
-                    if df2[SG].nunique() >= 2:
-                        out2 = (spc.xbar_r(df2, SG, VAL) if chart_type == "Xbar-R"
-                                else spc.xbar_s(df2, SG, VAL))
-                        m2 = out2["Xbar"]
+                ph = spc.phase1_establish(
+                    df, SG, VAL, chart="xbar_r" if chart_type == "Xbar-R" else "xbar_s")
+                with st.expander(f"🔧 Phase I — 한계 이탈 부분군 1개씩 제거 후 재작성 "
+                                 f"(제거 {len(ph['removed'])}개 · {ph['iters']}회 반복)"):
+                    st.write(f"제거된 부분군(Lot), 제거 순서대로: {ph['removed']}")
+                    if ph["final"] is not None:
+                        m2 = ph["final"]["Xbar"]
                         b1, b2 = st.columns(2)
                         b1.metric("초기 UCL", f"{main['UCL'].iloc[0]:.4f}")
                         b1.metric("초기 LCL", f"{main['LCL'].iloc[0]:.4f}")
@@ -394,13 +393,17 @@ with tab_spc:
                         b2.metric("재계산 LCL", f"{m2['LCL'].iloc[0]:.4f}",
                                   delta=f"{m2['LCL'].iloc[0]-main['LCL'].iloc[0]:.4f}")
                         sub = ["Xbar", "R"] if chart_type == "Xbar-R" else ["Xbar", "S"]
-                        ch2 = [out2[sub[0]], out2[sub[1]]]
+                        ch2 = [ph["final"][sub[0]], ph["final"][sub[1]]]
                         oo2 = {k: spc.ooc_by_limits(c) for k, c in enumerate(ch2)}
                         st.plotly_chart(
                             viz.control_chart_figure(ch2, sub, var_name=VAL, ooc_map=oo2,
                                                      title="이상치 제거 후 재작성된 관리도"),
                             width="stretch", config={"displayModeBar": False})
-                        st.caption("이상치를 제거하면 관리한계 폭이 좁아져, 기존에 정상이던 점이 새로운 이상점이 될 수 있습니다. 모든 점이 관리상태가 될 때까지 반복합니다.")
+                        if ph["in_control"]:
+                            st.success("모든 점이 관리상태에 도달했습니다 (Rule 1 이탈 없음).")
+                        st.caption("Phase I 절차: 한계를 벗어난 부분군을 한 번에 하나씩 제거하고 "
+                                   "관리한계를 다시 계산하는 과정을, 모든 점이 관리상태가 될 때까지 "
+                                   "반복합니다. (제외는 Rule 1(한계 이탈)만 적용)")
                     else:
                         st.warning("제거 후 부분군이 부족하여 재계산할 수 없습니다.")
         except Exception as e:

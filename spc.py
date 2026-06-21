@@ -232,3 +232,46 @@ def ooc_by_limits(chart):
     lcl = chart["LCL"].to_numpy(dtype=float)
     mask = (x > ucl) | (x < lcl)
     return list(np.where(mask)[0])
+
+
+def phase1_establish(df, subgroup_col, value_col, chart="xbar_r", max_iter=50):
+    """
+    Phase I 관리상태 확립.
+    - 제외 기준: 관리한계 이탈(Rule 1)만. (Rule 2/3/5/6은 표시만, 제외하지 않음)
+    - 매 반복마다 '가장 크게' 벗어난 부분군 1개만 제외하고 한계 재계산.
+    - 더 이상 이탈점이 없을 때(관리상태)까지 반복.
+    반환: {final(최종관리도 dict), removed(제거순서), iters, history, in_control}
+    """
+    builders = {"xbar_r": xbar_r, "xbar_s": xbar_s}
+    if chart not in builders:
+        raise ValueError("chart must be 'xbar_r' or 'xbar_s'")
+    build = builders[chart]
+    second = "R" if chart == "xbar_r" else "S"
+
+    work, removed, history = df.copy(), [], []
+    for _ in range(max_iter):
+        if work[subgroup_col].nunique() < 2:
+            break
+        res = build(work, subgroup_col, value_col)
+        xc, vc = res["Xbar"], res[second]
+        ooc = sorted(set(ooc_by_limits(xc)) | set(ooc_by_limits(vc)))   # Rule 1만
+        history.append({"k": int(xc.shape[0]), "ooc": [xc.index[i] for i in ooc]})
+        if not ooc:
+            break                              # 관리상태 도달 → 종료
+        # 이탈점 중 '가장 멀리' 벗어난 부분군 1개만 선택해 제거
+        worst_i, worst_dev = ooc[0], -np.inf
+        for i in ooc:
+            for ch in (xc, vc):
+                sig = (ch["UCL"].iloc[i] - ch["CL"].iloc[i]) / 3.0
+                if sig > 0:
+                    dev = abs(ch["point"].iloc[i] - ch["CL"].iloc[i]) / sig
+                    if dev > worst_dev:
+                        worst_dev, worst_i = dev, i
+        label = xc.index[worst_i]
+        removed.append(label.item() if hasattr(label, "item") else label)
+        work = work[work[subgroup_col] != label]
+
+    final = build(work, subgroup_col, value_col) if work[subgroup_col].nunique() >= 2 else None
+    in_control = bool(history and len(history[-1]["ooc"]) == 0)
+    return {"final": final, "removed": removed, "iters": len(history),
+            "history": history, "in_control": in_control}
